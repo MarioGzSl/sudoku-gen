@@ -122,6 +122,17 @@ if (success) {
 sudoku.clearCell({ row: 0, col: 0 });
 ```
 
+## Development
+
+### CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **Validation**: Runs tests on pull requests to ensure code quality
+- **Automatic Publishing**: When you push to the main branch with an updated version in package.json, the package is automatically published to npm
+
+For more details on the npm publishing workflow, see [.github/README.md](.github/README.md).
+
 ## License
 
 MIT 
