@@ -1,5 +1,5 @@
 {
-  "name": "sudoku-gen",
+  "name": "sudoku-easy-solver",
   "version": "1.0.0",
   "description": "A TypeScript library for generating, solving and validating Sudoku puzzles",
   "main": "dist/index.js",

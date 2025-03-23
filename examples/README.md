@@ -1,6 +1,6 @@
-# sudoku-gen Examples
+# sudoku-easy-solver Examples
 
-This folder contains several examples showing how to use the sudoku-gen library to generate and solve Sudoku puzzles.
+This folder contains several examples showing how to use the sudoku-easy-solver library to generate and solve Sudoku puzzles.
 
 ## Available Examples
 
@@ -42,6 +42,16 @@ This example simulates a game where the user requests hints to solve a Sudoku.
 To run:
 ```bash
 npx ts-node examples/hints.ts
+```
+
+### 5. Sudoku Validation
+**File:** `validation.ts`
+
+This example shows how to create and validate Sudokus manually, including a valid case and an invalid one.
+
+To run:
+```bash
+npx ts-node examples/validation.ts
 ```
 
 ### 6. Verifying Random Solutions

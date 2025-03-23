@@ -1,11 +1,11 @@
-# sudoku-gen
+# sudoku-easy-solver
 
 A TypeScript library for generating, solving and validating Sudoku puzzles.
 
 ## Installation
 
 ```bash
-npm install sudoku-gen
+npm install sudoku-easy-solver
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install sudoku-gen
 ### Creating a Sudoku
 
 ```typescript
-import { Sudoku, SudokuDifficulty } from 'sudoku-gen';
+import { Sudoku, SudokuDifficulty } from 'sudoku-easy-solver';
 
 // Create an empty Sudoku
 const sudoku = new Sudoku();
@@ -32,7 +32,7 @@ console.log(grid);
 ### Setting an existing Sudoku
 
 ```typescript
-import { Sudoku } from 'sudoku-gen';
+import { Sudoku } from 'sudoku-easy-solver';
 
 // Example Sudoku grid (0 represents empty cells)
 const grid = [
@@ -58,7 +58,7 @@ emptySudoku.setGrid(grid);
 ### Solving a Sudoku
 
 ```typescript
-import { Sudoku } from 'sudoku-gen';
+import { Sudoku } from 'sudoku-easy-solver';
 
 // Create a Sudoku with an existing grid
 const sudoku = new Sudoku(existingGrid);
@@ -76,7 +76,7 @@ if (solution) {
 ### Getting a hint
 
 ```typescript
-import { Sudoku } from 'sudoku-gen';
+import { Sudoku } from 'sudoku-easy-solver';
 
 const sudoku = new Sudoku(existingGrid);
 
@@ -90,7 +90,7 @@ if (hint) {
 ### Checking if a Sudoku is valid or solved
 
 ```typescript
-import { Sudoku } from 'sudoku-gen';
+import { Sudoku } from 'sudoku-easy-solver';
 
 const sudoku = new Sudoku(existingGrid);
 
@@ -106,7 +106,7 @@ console.log('Is solved:', isSolved);
 ### Placing numbers manually
 
 ```typescript
-import { Sudoku } from 'sudoku-gen';
+import { Sudoku } from 'sudoku-easy-solver';
 
 const sudoku = new Sudoku();
 
