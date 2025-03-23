@@ -44,6 +44,16 @@ To run:
 npx ts-node examples/hints.ts
 ```
 
+### 6. Verifying Random Solutions
+**File:** `random-solutions.ts`
+
+This example demonstrates that the generator creates varied solutions instead of always producing the same solution pattern.
+
+To run:
+```bash
+npx ts-node examples/random-solutions.ts
+```
+
 ## How to Run the Examples
 
 Make sure you have all dependencies installed:

@@ -46,8 +46,13 @@ export class Sudoku {
    * @returns The generated grid
    */
   public generate(difficulty: SudokuDifficulty = SudokuDifficulty.MEDIUM): SudokuGrid {
-    // Generate a solved Sudoku first
+    // Start with an empty grid
     this.grid = Array(9).fill(0).map(() => Array(9).fill(0));
+    
+    // Initialize with some random values to ensure varied solutions
+    this.initializeWithRandomValues();
+    
+    // Solve the partially filled grid to get a complete solution
     this.solve();
     
     // Store the solution
@@ -58,6 +63,49 @@ export class Sudoku {
     this.removeRandomCells(cellsToRemove);
     
     return this.getGrid();
+  }
+
+  /**
+   * Initialize the grid with some random values
+   * Ensures that we generate varied solutions
+   */
+  private initializeWithRandomValues(): void {
+    // Place random numbers in random positions
+    const numInitialValues = Math.floor(Math.random() * 10) + 10; // Between 10-19 initial values
+    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    
+    // Shuffle the numbers
+    for (let i = numbers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+    }
+    
+    // Place each number in a valid position
+    let placed = 0;
+    let attempts = 0;
+    const maxAttempts = 100; // Prevent infinite loops
+    
+    while (placed < numInitialValues && attempts < maxAttempts) {
+      attempts++;
+      
+      // Pick a random position
+      const row = Math.floor(Math.random() * 9);
+      const col = Math.floor(Math.random() * 9);
+      
+      // Skip if cell is already filled
+      if (this.grid[row][col] !== 0) {
+        continue;
+      }
+      
+      // Try each number until we find one that fits
+      for (const num of numbers) {
+        if (this.isValidPlacement(row, col, num)) {
+          this.grid[row][col] = num;
+          placed++;
+          break;
+        }
+      }
+    }
   }
 
   /**
@@ -355,8 +403,12 @@ export class Sudoku {
     
     const { row, col } = emptyCell;
     
-    // Try placing each number 1-9
-    for (let num = 1; num <= 9; num++) {
+    // Create an array of numbers 1-9 and shuffle it
+    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    this.shuffleArray(numbers);
+    
+    // Try placing each number in the shuffled order
+    for (const num of numbers) {
       if (this.isValidPlacement(row, col, num, grid)) {
         // Place number
         grid[row][col] = num;
@@ -373,6 +425,17 @@ export class Sudoku {
     
     // No solution found with the current configuration
     return false;
+  }
+
+  /**
+   * Shuffle array in place using Fisher-Yates algorithm
+   * @param array Array to shuffle
+   */
+  private shuffleArray<T>(array: T[]): void {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
   }
 
   /**
