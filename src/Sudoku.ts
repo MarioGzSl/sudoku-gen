@@ -4,14 +4,26 @@ import { SudokuGrid, SudokuDifficulty, Position } from './types';
  * Sudoku class to generate, set and solve Sudoku puzzles
  */
 export class Sudoku {
-  private grid: SudokuGrid = Array(9).fill(0).map(() => Array(9).fill(0));
+  private size: number;
+  private boxSize: number;
+  private grid: SudokuGrid;
   private solution: SudokuGrid | null = null;
 
   /**
    * Constructor for Sudoku class
    * @param grid Optional initial grid
+   * @param size Size of the grid (4, 5, or 9)
    */
-  constructor(grid?: SudokuGrid) {
+  constructor(grid?: SudokuGrid, size: number = 9) {
+    this.size = size;
+    
+    // Calculate box size - for perfect squares, use square root
+    // For non-perfect squares (like 5x5), use a reasonable approximation
+    this.boxSize = Math.floor(Math.sqrt(size));
+    
+    // Initialize empty grid with the specified size
+    this.grid = Array(size).fill(0).map(() => Array(size).fill(0));
+    
     if (grid) {
       this.setGrid(grid);
     }
@@ -26,11 +38,25 @@ export class Sudoku {
   }
 
   /**
+   * Get the size of the Sudoku grid
+   * @returns Size of the grid (4, 5, or 9)
+   */
+  public getSize(): number {
+    return this.size;
+  }
+
+  /**
    * Set a grid to an existing Sudoku
    * @param grid The grid to set
    * @throws Error if the grid is invalid
    */
   public setGrid(grid: SudokuGrid): void {
+    // Update size based on the provided grid
+    if (grid.length !== this.size) {
+      this.size = grid.length;
+      this.boxSize = Math.floor(Math.sqrt(this.size));
+    }
+
     if (!this.isValidGrid(grid)) {
       throw new Error('Invalid Sudoku grid');
     }
@@ -47,7 +73,7 @@ export class Sudoku {
    */
   public generate(difficulty: SudokuDifficulty = SudokuDifficulty.MEDIUM): SudokuGrid {
     // Start with an empty grid
-    this.grid = Array(9).fill(0).map(() => Array(9).fill(0));
+    this.grid = Array(this.size).fill(0).map(() => Array(this.size).fill(0));
     
     // Initialize with some random values to ensure varied solutions
     this.initializeWithRandomValues();
@@ -71,26 +97,26 @@ export class Sudoku {
    */
   private initializeWithRandomValues(): void {
     // Place random numbers in random positions
-    const numInitialValues = Math.floor(Math.random() * 10) + 10; // Between 10-19 initial values
-    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    // Scale the number of initial values based on grid size
+    const numInitialValues = Math.floor(Math.random() * (this.size + 1)) + Math.floor(this.size * 1.1);
+    
+    // Create array of possible values (1 to size)
+    const numbers = Array.from({ length: this.size }, (_, i) => i + 1);
     
     // Shuffle the numbers
-    for (let i = numbers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
-    }
+    this.shuffleArray(numbers);
     
     // Place each number in a valid position
     let placed = 0;
     let attempts = 0;
-    const maxAttempts = 100; // Prevent infinite loops
+    const maxAttempts = this.size * this.size * 2; // Scale attempts based on grid size
     
     while (placed < numInitialValues && attempts < maxAttempts) {
       attempts++;
       
       // Pick a random position
-      const row = Math.floor(Math.random() * 9);
-      const col = Math.floor(Math.random() * 9);
+      const row = Math.floor(Math.random() * this.size);
+      const col = Math.floor(Math.random() * this.size);
       
       // Skip if cell is already filled
       if (this.grid[row][col] !== 0) {
@@ -285,19 +311,19 @@ export class Sudoku {
    */
   private isValidGrid(grid: SudokuGrid): boolean {
     // Check dimensions
-    if (grid.length !== 9) {
+    if (grid.length !== this.size) {
       return false;
     }
     
-    for (let row = 0; row < 9; row++) {
-      if (grid[row].length !== 9) {
+    for (let row = 0; row < this.size; row++) {
+      if (grid[row].length !== this.size) {
         return false;
       }
       
       // Check if all values are valid
-      for (let col = 0; col < 9; col++) {
+      for (let col = 0; col < this.size; col++) {
         const value = grid[row][col];
-        if (value < 0 || value > 9 || !Number.isInteger(value)) {
+        if (value < 0 || value > this.size || !Number.isInteger(value)) {
           return false;
         }
         
