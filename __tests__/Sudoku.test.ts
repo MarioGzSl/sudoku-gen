@@ -62,6 +62,36 @@ describe('Sudoku', () => {
   });
   
   describe('generate', () => {
+    it.each([
+      [SudokuDifficulty.EASY, 35],
+      [SudokuDifficulty.MEDIUM, 45],
+      [SudokuDifficulty.HARD, 52],
+      [SudokuDifficulty.EXPERT, 58],
+    ])('generates a completable puzzle at difficulty %s', (difficulty, emptyCells) => {
+      for (let seed = 1; seed <= 10; seed++) {
+        let state = seed;
+        const random = jest.spyOn(Math, 'random').mockImplementation(() => {
+          state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+          return state / 0x100000000;
+        });
+        try {
+          const sudoku = new Sudoku();
+          const grid = sudoku.generate(difficulty as SudokuDifficulty);
+          expect(grid.flat().filter(value => value === 0)).toHaveLength(emptyCells as number);
+          expect(sudoku.isValid()).toBe(true);
+          // Filling with hints must recover a complete valid solution.
+          for (let index = 0; index < (emptyCells as number); index++) {
+            const hint = sudoku.getHint();
+            expect(hint).not.toBeNull();
+            expect(sudoku.placeNumber(hint!.position, hint!.value)).toBe(true);
+          }
+          expect(sudoku.isSolved()).toBe(true);
+        } finally {
+          random.mockRestore();
+        }
+      }
+    });
+
     it('should generate a valid Sudoku puzzle', () => {
       const sudoku = new Sudoku();
       const grid = sudoku.generate();
@@ -154,4 +184,4 @@ describe('Sudoku', () => {
       expect(sudoku.getGrid()[0][0]).toBe(0);
     });
   });
-}); 
+});
