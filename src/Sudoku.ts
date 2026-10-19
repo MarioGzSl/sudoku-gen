@@ -1,465 +1,140 @@
-import { SudokuGrid, SudokuDifficulty, Position } from './types';
-
-/**
- * Sudoku class to generate, set and solve Sudoku puzzles
- */
+import {
+  assertGrid,
+  copyGrid,
+  emptyGrid,
+  getCandidates,
+  getConflicts,
+  parseGrid,
+  stringifyGrid,
+  validateGrid,
+  validPosition,
+} from "./grid.js";
+import { analyze, countSolutions, solveGrid } from "./engine.js";
+import { generatePuzzle } from "./generate.js";
+import { getHint, rateDifficulty } from "./hints.js";
+import {
+  SudokuDifficulty,
+  type ReadonlyGrid,
+  type Position,
+  type SudokuGrid,
+  type GenerateOptions,
+  type SolveOptions,
+  type CountOptions,
+  type Hint,
+  type HintOptions,
+} from "./types.js";
+/** Mutable game-board convenience API. Pure equivalents are exported separately. */
 export class Sudoku {
-  private grid: SudokuGrid = Array(9).fill(0).map(() => Array(9).fill(0));
-  private solution: SudokuGrid | null = null;
-
-  /**
-   * Constructor for Sudoku class
-   * @param grid Optional initial grid
-   */
-  constructor(grid?: SudokuGrid) {
-    if (grid) {
-      this.setGrid(grid);
-    }
+  private grid: SudokuGrid = emptyGrid();
+  constructor(grid?: ReadonlyGrid) {
+    if (grid !== undefined) this.setGrid(grid);
   }
-
-  /**
-   * Get the current Sudoku grid
-   * @returns The current grid
-   */
-  public getGrid(): SudokuGrid {
-    return this.grid.map(row => [...row]);
+  static fromString(text: string): Sudoku {
+    return new Sudoku(parseGrid(text));
   }
-
-  /**
-   * Set a grid to an existing Sudoku
-   * @param grid The grid to set
-   * @throws Error if the grid is invalid
-   */
-  public setGrid(grid: SudokuGrid): void {
-    if (!this.isValidGrid(grid)) {
-      throw new Error('Invalid Sudoku grid');
-    }
-    
-    // Deep copy the grid
-    this.grid = grid.map(row => [...row]);
-    this.solution = null; // Reset solution when grid changes
+  getGrid(): SudokuGrid {
+    return copyGrid(this.grid);
   }
-
-  /**
-   * Generate a new Sudoku puzzle
-   * @param difficulty The difficulty level of the puzzle
-   * @returns The generated grid
-   */
-  public generate(difficulty: SudokuDifficulty = SudokuDifficulty.MEDIUM): SudokuGrid {
-    // Start from a complete valid solution, avoiding unsolvable random clues.
-    this.initializeRandomSolution();
-    
-    // Store the solution
-    this.solution = this.grid.map(row => [...row]);
-    
-    // Remove numbers based on difficulty
-    const cellsToRemove = this.getCellsToRemoveByDifficulty(difficulty);
-    this.removeRandomCells(cellsToRemove);
-    
+  setGrid(grid: ReadonlyGrid): void {
+    assertGrid(grid);
+    this.grid = copyGrid(grid);
+  }
+  toString(empty: "0" | "." = "0"): string {
+    return stringifyGrid(this.grid, empty);
+  }
+  generate(
+    difficultyOrOptions:
+      | SudokuDifficulty
+      | GenerateOptions = SudokuDifficulty.MEDIUM,
+  ): SudokuGrid {
+    const options =
+      typeof difficultyOrOptions === "string"
+        ? { difficulty: difficultyOrOptions }
+        : difficultyOrOptions;
+    const grid = generatePuzzle(options);
+    this.grid = grid;
     return this.getGrid();
   }
-
-  /**
-   * Randomize a solved grid using transformations that preserve Sudoku rules.
-   * This keeps generation bounded and guarantees that every puzzle is solvable.
-   */
-  private initializeRandomSolution(): void {
-    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-    this.shuffleArray(numbers);
-
-    const shuffledIndices = (): number[] => {
-      const groups = [0, 1, 2];
-      this.shuffleArray(groups);
-      const indices: number[] = [];
-      for (const group of groups) {
-        const offsets = [0, 1, 2];
-        this.shuffleArray(offsets);
-        indices.push(...offsets.map(offset => group * 3 + offset));
-      }
-      return indices;
-    };
-
-    const rows = shuffledIndices();
-    const columns = shuffledIndices();
-    this.grid = rows.map(row => columns.map(col =>
-      numbers[(row * 3 + Math.floor(row / 3) + col) % 9]
-    ));
+  /** Mutates this board only when a solution is found. */
+  solve(options: SolveOptions = {}): SudokuGrid | null {
+    const solved = solveGrid(this.grid, options);
+    if (!solved) return null;
+    this.grid = solved;
+    return this.getGrid();
   }
-
-  /**
-   * Solve the current Sudoku puzzle
-   * @returns The solved grid or null if no solution exists
-   */
-  public solve(): SudokuGrid | null {
-    const emptyCells = this.findEmptyCells();
-    
-    if (emptyCells.length === 0) {
-      // Grid is already filled
-      return this.getGrid();
-    }
-    
-    // Make a copy of the grid to work with
-    const workingGrid = this.grid.map(row => [...row]);
-    
-    if (this.solveRecursive(workingGrid)) {
-      this.grid = workingGrid;
-      this.solution = workingGrid.map(row => [...row]);
-      return this.getGrid();
-    }
-    
-    return null;
+  isValid(): boolean {
+    return validateGrid(this.grid);
   }
-
-  /**
-   * Check if the current Sudoku is valid
-   * @returns True if valid, false otherwise
-   */
-  public isValid(): boolean {
-    return this.isValidGrid(this.grid);
+  isSolved(): boolean {
+    return (
+      this.isValid() &&
+      this.grid.every((row) => row.every((value) => value !== 0))
+    );
   }
-
-  /**
-   * Check if the current Sudoku is solved
-   * @returns True if solved, false otherwise
-   */
-  public isSolved(): boolean {
-    // A solved Sudoku has all cells filled and is valid
-    const hasEmptyCells = this.grid.some(row => row.includes(0));
-    return !hasEmptyCells && this.isValid();
+  getCandidates(position: Position): number[] {
+    return getCandidates(this.grid, position);
   }
-
-  /**
-   * Get a hint for the next move
-   * @returns A position and value for the next move, or null if no hint is available
-   */
-  public getHint(): { position: Position, value: number } | null {
-    if (!this.solution) {
-      this.solve();
-      if (!this.solution) {
-        return null; // No solution exists
-      }
-    }
-    
-    // Find an empty cell
-    for (let row = 0; row < 9; row++) {
-      for (let col = 0; col < 9; col++) {
-        if (this.grid[row][col] === 0) {
-          return {
-            position: { row, col },
-            value: this.solution[row][col]
-          };
-        }
-      }
-    }
-    
-    return null; // No empty cells
+  getConflicts(): Position[] {
+    return getConflicts(this.grid);
   }
-
-  /**
-   * Place a number in the grid
-   * @param position Position to place the number
-   * @param value Number to place (1-9)
-   * @returns True if the number was placed, false if it's an invalid move
-   */
-  public placeNumber(position: Position, value: number): boolean {
-    const { row, col } = position;
-    
-    // Validate bounds
-    if (row < 0 || row >= 9 || col < 0 || col >= 9) {
+  analyze(options: SolveOptions = {}) {
+    return analyze(this.grid, options);
+  }
+  countSolutions(options: CountOptions = {}) {
+    return countSolutions(this.grid, options);
+  }
+  rateDifficulty(options: SolveOptions = {}) {
+    return rateDifficulty(this.grid, options);
+  }
+  getHint(options: HintOptions & { explain: true }): Hint | null;
+  getHint(options?: HintOptions): { position: Position; value: number } | null;
+  getHint(
+    options: HintOptions = {},
+  ): Hint | { position: Position; value: number } | null {
+    const hint = getHint(this.grid, options);
+    return hint && !options.explain
+      ? { position: hint.position, value: hint.value }
+      : hint;
+  }
+  /** Checks local rules, not whether the move preserves solvability. */
+  placeNumber(position: Position, value: number): boolean {
+    if (
+      !validPosition(position) ||
+      !Number.isInteger(value) ||
+      value < 1 ||
+      value > 9
+    )
       return false;
-    }
-    
-    // Validate value
-    if (value < 1 || value > 9) {
-      return false;
-    }
-    
-    // Check if the cell is already filled
-    if (this.grid[row][col] !== 0) {
-      return false;
-    }
-    
-    // Check if the placement is valid
-    if (!this.isValidPlacement(row, col, value)) {
-      return false;
-    }
-    
-    // Place the number
-    this.grid[row][col] = value;
+    if (!getCandidates(this.grid, position).includes(value)) return false;
+    this.grid[position.row][position.col] = value;
     return true;
   }
-
-  /**
-   * Clear a cell in the grid
-   * @param position Position to clear
-   * @returns True if the cell was cleared, false otherwise
-   */
-  public clearCell(position: Position): boolean {
-    const { row, col } = position;
-    
-    // Validate bounds
-    if (row < 0 || row >= 9 || col < 0 || col >= 9) {
-      return false;
-    }
-    
-    this.grid[row][col] = 0;
+  clearCell(position: Position): boolean {
+    if (!validPosition(position)) return false;
+    this.grid[position.row][position.col] = 0;
     return true;
   }
-
-  /**
-   * Reset the grid to empty
-   */
-  public reset(): void {
-    this.grid = Array(9).fill(0).map(() => Array(9).fill(0));
-    this.solution = null;
+  reset(): void {
+    this.grid = emptyGrid();
   }
-
-  /**
-   * Print the Sudoku grid in a pretty format
-   * @param grid The grid to print (defaults to the current grid)
-   * @returns A string representation of the grid in a nice format
-   */
-  public prettyPrint(grid?: SudokuGrid): string {
-    const gridToPrint = grid || this.grid;
-    let result = '';
-    
-    // Top border
-    result += '+-------+-------+-------+\n';
-    
-    for (let row = 0; row < 9; row++) {
-      result += '| ';
-      
-      for (let col = 0; col < 9; col++) {
-        // Add the cell value (empty space for 0)
-        const cellValue = gridToPrint[row][col] === 0 ? ' ' : gridToPrint[row][col];
-        result += cellValue + ' ';
-        
-        // Add vertical separator after every 3 columns
-        if ((col + 1) % 3 === 0) {
-          result += '| ';
-        }
-      }
-      
-      result += '\n';
-      
-      // Add horizontal separator after every 3 rows
-      if ((row + 1) % 3 === 0 && row < 8) {
-        result += '+-------+-------+-------+\n';
-      }
-    }
-    
-    // Bottom border
-    result += '+-------+-------+-------+\n';
-    
-    return result;
-  }
-
-  // Private helper methods
-
-  /**
-   * Check if a grid is valid
-   * @param grid The grid to check
-   * @returns True if valid, false otherwise
-   */
-  private isValidGrid(grid: SudokuGrid): boolean {
-    // Check dimensions
-    if (grid.length !== 9) {
-      return false;
-    }
-    
-    for (let row = 0; row < 9; row++) {
-      if (grid[row].length !== 9) {
-        return false;
-      }
-      
-      // Check if all values are valid
-      for (let col = 0; col < 9; col++) {
-        const value = grid[row][col];
-        if (value < 0 || value > 9 || !Number.isInteger(value)) {
-          return false;
-        }
-        
-        // Skip checking empty cells
-        if (value === 0) {
-          continue;
-        }
-        
-        // Temporarily set cell to empty to check if placement is valid
-        const temp = grid[row][col];
-        grid[row][col] = 0;
-        const isValid = this.isValidPlacement(row, col, temp, grid);
-        grid[row][col] = temp;
-        
-        if (!isValid) {
-          return false;
-        }
-      }
-    }
-    
-    return true;
-  }
-
-  /**
-   * Check if a number can be placed at a specific position
-   * @param row Row index
-   * @param col Column index
-   * @param value Value to place
-   * @param grid Optional grid to check against (defaults to this.grid)
-   * @returns True if valid, false otherwise
-   */
-  private isValidPlacement(row: number, col: number, value: number, grid: SudokuGrid = this.grid): boolean {
-    // Check row
-    for (let c = 0; c < 9; c++) {
-      if (c !== col && grid[row][c] === value) {
-        return false;
-      }
-    }
-    
-    // Check column
+  prettyPrint(grid: ReadonlyGrid = this.grid): string {
+    assertGrid(grid);
+    const border = "+-------+-------+-------+\n";
+    let output = border;
     for (let r = 0; r < 9; r++) {
-      if (r !== row && grid[r][col] === value) {
-        return false;
-      }
+      output +=
+        "| " +
+        [0, 3, 6]
+          .map((c) =>
+            grid[r]
+              .slice(c, c + 3)
+              .map((v) => v || " ")
+              .join(" "),
+          )
+          .join(" | ") +
+        " |\n";
+      if (r % 3 === 2) output += border;
     }
-    
-    // Check 3x3 box
-    const boxStartRow = Math.floor(row / 3) * 3;
-    const boxStartCol = Math.floor(col / 3) * 3;
-    
-    for (let r = boxStartRow; r < boxStartRow + 3; r++) {
-      for (let c = boxStartCol; c < boxStartCol + 3; c++) {
-        if (r !== row && c !== col && grid[r][c] === value) {
-          return false;
-        }
-      }
-    }
-    
-    return true;
-  }
-
-  /**
-   * Find all empty cells in the grid
-   * @returns Array of empty cell positions
-   */
-  private findEmptyCells(): Position[] {
-    const emptyCells: Position[] = [];
-    
-    for (let row = 0; row < 9; row++) {
-      for (let col = 0; col < 9; col++) {
-        if (this.grid[row][col] === 0) {
-          emptyCells.push({ row, col });
-        }
-      }
-    }
-    
-    return emptyCells;
-  }
-
-  /**
-   * Recursive solver using backtracking
-   * @param grid Grid to solve
-   * @returns True if solved, false otherwise
-   */
-  private solveRecursive(grid: SudokuGrid): boolean {
-    // Find an empty cell
-    let emptyCell: Position | null = null;
-    
-    for (let row = 0; row < 9; row++) {
-      for (let col = 0; col < 9; col++) {
-        if (grid[row][col] === 0) {
-          emptyCell = { row, col };
-          break;
-        }
-      }
-      if (emptyCell) break;
-    }
-    
-    // If no empty cell is found, the puzzle is solved
-    if (!emptyCell) {
-      return true;
-    }
-    
-    const { row, col } = emptyCell;
-    
-    // Create an array of numbers 1-9 and shuffle it
-    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-    this.shuffleArray(numbers);
-    
-    // Try placing each number in the shuffled order
-    for (const num of numbers) {
-      if (this.isValidPlacement(row, col, num, grid)) {
-        // Place number
-        grid[row][col] = num;
-        
-        // Recursively solve the rest of the puzzle
-        if (this.solveRecursive(grid)) {
-          return true;
-        }
-        
-        // If placing this number doesn't lead to a solution, backtrack
-        grid[row][col] = 0;
-      }
-    }
-    
-    // No solution found with the current configuration
-    return false;
-  }
-
-  /**
-   * Shuffle array in place using Fisher-Yates algorithm
-   * @param array Array to shuffle
-   */
-  private shuffleArray<T>(array: T[]): void {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-  }
-
-  /**
-   * Get the number of cells to remove based on difficulty
-   * @param difficulty The difficulty level
-   * @returns Number of cells to remove
-   */
-  private getCellsToRemoveByDifficulty(difficulty: SudokuDifficulty): number {
-    switch (difficulty) {
-      case SudokuDifficulty.EASY:
-        return 35; // 46 filled cells
-      case SudokuDifficulty.MEDIUM:
-        return 45; // 36 filled cells
-      case SudokuDifficulty.HARD:
-        return 52; // 29 filled cells
-      case SudokuDifficulty.EXPERT:
-        return 58; // 23 filled cells
-      default:
-        return 45; // Default to medium
-    }
-  }
-
-  /**
-   * Remove random cells from the grid
-   * @param count Number of cells to remove
-   */
-  private removeRandomCells(count: number): void {
-    const positions: Position[] = [];
-    
-    // Get all positions
-    for (let row = 0; row < 9; row++) {
-      for (let col = 0; col < 9; col++) {
-        positions.push({ row, col });
-      }
-    }
-    
-    // Shuffle positions
-    for (let i = positions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [positions[i], positions[j]] = [positions[j], positions[i]];
-    }
-    
-    // Remove cells
-    for (let i = 0; i < Math.min(count, positions.length); i++) {
-      const { row, col } = positions[i];
-      this.grid[row][col] = 0;
-    }
+    return output;
   }
 }

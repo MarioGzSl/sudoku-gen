@@ -44,8 +44,12 @@ jobs:
       - name: Build and test
         run: |
           npm run build
-          npm test -- --runInBand
+          npm test
           npm run test:release
+          npm run test:types
+          npm run test:package
+          npm run test:examples
+          npm audit --audit-level=high
 
       - name: Check package contents
         run: npm pack --dry-run --ignore-scripts

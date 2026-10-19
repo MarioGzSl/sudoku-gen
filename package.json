@@ -1,9 +1,9 @@
 {
   "name": "sudoku-easy-solver",
-  "version": "1.0.1",
-  "description": "A TypeScript library for generating, solving and validating Sudoku puzzles",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "2.0.0",
+  "description": "Generate unique Sudoku puzzles, solve, analyze, explain hints and render SVG or PNG images. TypeScript-first, dependency-free core.",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MarioGzSl/sudoku-gen.git"
@@ -17,14 +17,18 @@
     "registry": "https://registry.npmjs.org/"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node src/index.ts",
-    "test": "jest",
+    "build": "node scripts/build.cjs",
+    "test": "node --test --test-timeout=60000 --experimental-test-coverage --test-coverage-include=dist/cjs/*.js --test-coverage-lines=95 --test-coverage-functions=95 --test-coverage-branches=85 tests/*.test.cjs",
     "test:release": "node --test scripts/check-release.test.cjs",
-    "prepublishOnly": "npm run build"
+    "test:package": "node scripts/test-package.cjs",
+    "test:types": "tsc -p tests/tsconfig.json",
+    "test:examples": "node scripts/test-examples.cjs",
+    "docs:assets": "node scripts/render-examples.cjs",
+    "prepublishOnly": "npm run build && npm test && npm run test:release && npm run test:types && npm run test:package && npm run test:examples"
   },
   "keywords": [
     "sudoku",
@@ -36,11 +40,54 @@
   "author": "MarioGzSl",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.11",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.6",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "@resvg/resvg-js": "^2.6.2"
+  },
+  "module": "./dist/esm/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./image": {
+      "import": {
+        "types": "./dist/esm/image.d.ts",
+        "default": "./dist/esm/image.js"
+      },
+      "require": {
+        "types": "./dist/cjs/image.d.ts",
+        "default": "./dist/cjs/image.js"
+      }
+    },
+    "./async": {
+      "import": {
+        "types": "./dist/esm/async.d.ts",
+        "default": "./dist/esm/async.js"
+      },
+      "require": {
+        "types": "./dist/cjs/async.d.ts",
+        "default": "./dist/cjs/async.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "peerDependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  },
+  "peerDependenciesMeta": {
+    "@resvg/resvg-js": {
+      "optional": true
+    }
   }
 }
