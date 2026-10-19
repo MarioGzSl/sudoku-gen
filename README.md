@@ -128,11 +128,15 @@ sudoku.clearCell({ row: 0, col: 0 });
 
 This project uses GitHub Actions for continuous integration and deployment:
 
-- **Validation**: Runs tests on pull requests to ensure code quality
-- **Automatic Publishing**: When you push to the main branch with an updated version in package.json, the package is automatically published to npm
+- **Validation**: Builds and tests pull requests on Node.js 22 and 24.
+- **Automatic Publishing**: A push to `main` publishes a new stable version after the build and tests pass. The workflow checks npm directly and skips versions already published.
+- **Authentication**: GitHub Actions uses npm Trusted Publishing (OIDC), with provenance and no stored npm publishing token.
+
+To release, run `npm version patch --no-git-tag-version` (or `minor` / `major`),
+commit both `package.json` and `package-lock.json`, and merge into `main`.
 
 For more details on the npm publishing workflow, see [.github/README.md](.github/README.md).
 
 ## License
 
-MIT 
+MIT

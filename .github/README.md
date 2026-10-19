@@ -1,57 +1,35 @@
-# GitHub Workflows
+# GitHub workflows
 
-## npm Publishing Workflow
+Pull requests and branches are built and tested on Node.js 22 and 24.
+Pushes to `main` run the publication workflow on Node.js 24.
 
-This repository includes a GitHub Actions workflow that automatically publishes the package to npm when:
+## Publishing a new version
 
-1. Changes are pushed to the `main` branch
-2. The version number in `package.json` has been updated
+1. Make and test your changes.
+2. Run `npm version patch --no-git-tag-version` (or `minor` / `major`).
+3. Commit both `package.json` and `package-lock.json`, then merge into `main`.
+4. Check the **Publish to npm** workflow in GitHub Actions.
 
-### Setup Instructions
+The workflow checks the npm registry instead of comparing adjacent commits.
+An existing version is skipped; a new stable version greater than `latest` is
+published only after the build and tests pass. Registry errors stop the workflow.
+You can retry through **Actions → Publish to npm → Run workflow** on `main`.
+Published versions cannot be overwritten. Prerelease publishing is not automated.
 
-To use this workflow, you need to configure an npm token as a GitHub secret:
+## npm authentication
 
-1. **Generate an npm Access Token**:
-   - Log in to your npm account at [npmjs.com](https://www.npmjs.com/)
-   - Go to your profile settings
-   - Select "Access Tokens"
-   - Click "Generate New Token"
-   - Choose "Publish" as the token type
-   - Save the token (it will only be shown once)
+Publishing uses npm Trusted Publishing (OIDC), without `NPM_TOKEN`.
+The package's trusted publisher configuration must match:
 
-2. **Add the Token to GitHub Secrets**:
-   - Go to your GitHub repository
-   - Click on "Settings" > "Secrets and variables" > "Actions"
-   - Click "New repository secret"
-   - Set the name as `NPM_TOKEN`
-   - Paste your npm token as the value
-   - Click "Add secret"
+- Provider: GitHub Actions
+- Organization or user: `MarioGzSl`
+- Repository: `sudoku-gen`
+- Workflow filename: `npm-publish.yml`
+- Environment: leave empty
+- Allow direct publishing with `npm publish`
 
-### How It Works
+The workflow grants `id-token: write`, uses a GitHub-hosted runner and includes
+provenance. Repository URLs in `package.json` must continue to match this repo.
+Do not add long-lived npm tokens to the workflow.
 
-The workflow performs the following steps:
-
-1. Checks out the repository code
-2. Sets up Node.js environment
-3. Installs dependencies with `npm ci`
-4. Builds the package
-5. Runs tests
-6. Compares the current version in package.json with the previous version
-7. If the version has changed, publishes the package to npm
-
-### Publishing a New Version
-
-To publish a new version:
-
-1. Update the version number in `package.json`
-2. Commit the changes
-3. Push to the `main` branch
-4. The workflow will automatically publish the new version
-
-### Troubleshooting
-
-If the workflow fails, check the following:
-
-- Ensure your npm token is valid and has publish permissions
-- Verify the version in package.json was actually updated
-- Check if you have the proper ownership rights to the package on npm 
+See [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/).

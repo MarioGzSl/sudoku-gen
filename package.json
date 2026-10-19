@@ -1,9 +1,21 @@
 {
   "name": "sudoku-easy-solver",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A TypeScript library for generating, solving and validating Sudoku puzzles",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarioGzSl/sudoku-gen.git"
+  },
+  "homepage": "https://github.com/MarioGzSl/sudoku-gen#readme",
+  "bugs": {
+    "url": "https://github.com/MarioGzSl/sudoku-gen/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "files": [
     "dist"
   ],
@@ -11,6 +23,7 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "jest",
+    "test:release": "node --test scripts/check-release.test.cjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -20,7 +33,7 @@
     "solver",
     "typescript"
   ],
-  "author": "",
+  "author": "MarioGzSl",
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.14",

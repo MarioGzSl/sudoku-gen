@@ -46,14 +46,8 @@ export class Sudoku {
    * @returns The generated grid
    */
   public generate(difficulty: SudokuDifficulty = SudokuDifficulty.MEDIUM): SudokuGrid {
-    // Start with an empty grid
-    this.grid = Array(9).fill(0).map(() => Array(9).fill(0));
-    
-    // Initialize with some random values to ensure varied solutions
-    this.initializeWithRandomValues();
-    
-    // Solve the partially filled grid to get a complete solution
-    this.solve();
+    // Start from a complete valid solution, avoiding unsolvable random clues.
+    this.initializeRandomSolution();
     
     // Store the solution
     this.solution = this.grid.map(row => [...row]);
@@ -66,46 +60,30 @@ export class Sudoku {
   }
 
   /**
-   * Initialize the grid with some random values
-   * Ensures that we generate varied solutions
+   * Randomize a solved grid using transformations that preserve Sudoku rules.
+   * This keeps generation bounded and guarantees that every puzzle is solvable.
    */
-  private initializeWithRandomValues(): void {
-    // Place random numbers in random positions
-    const numInitialValues = Math.floor(Math.random() * 10) + 10; // Between 10-19 initial values
+  private initializeRandomSolution(): void {
     const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-    
-    // Shuffle the numbers
-    for (let i = numbers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
-    }
-    
-    // Place each number in a valid position
-    let placed = 0;
-    let attempts = 0;
-    const maxAttempts = 100; // Prevent infinite loops
-    
-    while (placed < numInitialValues && attempts < maxAttempts) {
-      attempts++;
-      
-      // Pick a random position
-      const row = Math.floor(Math.random() * 9);
-      const col = Math.floor(Math.random() * 9);
-      
-      // Skip if cell is already filled
-      if (this.grid[row][col] !== 0) {
-        continue;
+    this.shuffleArray(numbers);
+
+    const shuffledIndices = (): number[] => {
+      const groups = [0, 1, 2];
+      this.shuffleArray(groups);
+      const indices: number[] = [];
+      for (const group of groups) {
+        const offsets = [0, 1, 2];
+        this.shuffleArray(offsets);
+        indices.push(...offsets.map(offset => group * 3 + offset));
       }
-      
-      // Try each number until we find one that fits
-      for (const num of numbers) {
-        if (this.isValidPlacement(row, col, num)) {
-          this.grid[row][col] = num;
-          placed++;
-          break;
-        }
-      }
-    }
+      return indices;
+    };
+
+    const rows = shuffledIndices();
+    const columns = shuffledIndices();
+    this.grid = rows.map(row => columns.map(col =>
+      numbers[(row * 3 + Math.floor(row / 3) + col) % 9]
+    ));
   }
 
   /**
@@ -484,4 +462,4 @@ export class Sudoku {
       this.grid[row][col] = 0;
     }
   }
-} 
+}
