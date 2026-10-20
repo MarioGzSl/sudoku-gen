@@ -4,6 +4,14 @@
 comprueba soluciones y ofrece pistas, candidatos, partidas con historial y
 exportación visual. El núcleo no tiene dependencias de ejecución.
 
+| Un tablero para jugar | La solución para compartir |
+| :---: | :---: |
+| [![Sudoku rasterizado en PNG con el tema paper](assets/puzzle.png)](assets/puzzle.png) | [![Solución en PNG con el tema midnight y respuestas en verde menta](assets/solution.png)](assets/solution.png) |
+
+Exportaciones reales a **1200 × 1200 píxeles** del mismo sudoku. Haz clic para ver
+los PNG completos. La [guía de imágenes](IMAGES.md) incluye también un ejemplo con
+pista resaltada y candidatos, junto con el código para crear tus propias imágenes.
+
 ```sh
 npm install sudoku-easy-solver
 ```

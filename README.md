@@ -6,6 +6,17 @@ A TypeScript Sudoku toolkit for **unique puzzle generation**, fast solving, cand
 solution analysis and SVG/PNG rendering. The core has **no runtime dependencies** and
 ships CommonJS, ESM and TypeScript declarations.
 
+| A puzzle to play | An answer sheet to share |
+| :---: | :---: |
+| [![Sudoku puzzle rendered as a PNG with the paper theme](https://raw.githubusercontent.com/MarioGzSl/sudoku-gen/670001d64f0a6e44844bae1c7da277761ea7a773/docs/assets/puzzle.png)](https://raw.githubusercontent.com/MarioGzSl/sudoku-gen/670001d64f0a6e44844bae1c7da277761ea7a773/docs/assets/puzzle.png) | [![Solved Sudoku rendered as a PNG with the midnight theme and mint answer digits](https://raw.githubusercontent.com/MarioGzSl/sudoku-gen/670001d64f0a6e44844bae1c7da277761ea7a773/docs/assets/solution.png)](https://raw.githubusercontent.com/MarioGzSl/sudoku-gen/670001d64f0a6e44844bae1c7da277761ea7a773/docs/assets/solution.png) |
+| Warm paper, clear clues, room to think. | Original clues in white; solved digits in mint. |
+
+Actual **1200 × 1200 PNG exports** from the same puzzle. Click either image to open
+the full resolution file. Create your own with the [image export example](#export-beautiful-svg-and-png-images).
+
+[Quick start](#your-first-puzzle) ·
+[Hints](#candidates-and-useful-hints) ·
+[Game state](#a-game-with-protected-clues-and-undo) ·
 [API reference](https://github.com/MarioGzSl/sudoku-gen/blob/main/docs/API.md) ·
 [Image export](https://github.com/MarioGzSl/sudoku-gen/blob/main/docs/IMAGES.md) ·
 [Examples](https://github.com/MarioGzSl/sudoku-gen/tree/main/examples) ·
@@ -115,6 +126,19 @@ include the original and current board; undo/redo history is not serialized.
 
 ## Export beautiful SVG and PNG images
 
+Choose **paper** for a warm printable board, **midnight** for dark backgrounds,
+or **minimal** for monochrome output. Add titles, color the solution, or turn a
+logical hint into an illustrated next step.
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/MarioGzSl/sudoku-gen/670001d64f0a6e44844bae1c7da277761ea7a773/docs/assets/hint.png">
+    <img src="https://raw.githubusercontent.com/MarioGzSl/sudoku-gen/670001d64f0a6e44844bae1c7da277761ea7a773/docs/assets/hint.png" alt="PNG Sudoku hint: row 5, column 5 is highlighted with a 5; empty cells show candidate pencil marks" width="600">
+  </a>
+</p>
+
+*A hint, explained visually: candidate pencil marks and a highlighted next move.
+The preview does not change the puzzle.*
+
 SVG works without additional packages:
 
 ```ts
@@ -152,6 +176,9 @@ if (solution) {
 
 Export hints, highlight cells, or show pencil marks with the same options.
 [See the complete image guide](https://github.com/MarioGzSl/sudoku-gen/blob/main/docs/IMAGES.md).
+
+The [runnable image example](https://github.com/MarioGzSl/sudoku-gen/blob/main/examples/images.mjs)
+creates all three previews above as both SVG and PNG files.
 
 ## Keep your Node.js application responsive
 
