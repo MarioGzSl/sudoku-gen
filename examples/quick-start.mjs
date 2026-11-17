@@ -7,4 +7,4 @@ board.generate({
 });
 console.log(board.prettyPrint());
 console.log(board.analyze().status);
-console.log(board.rateDifficulty());
+console.log("Estimated difficulty:", board.rateDifficulty().level);

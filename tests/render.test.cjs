@@ -44,6 +44,23 @@ test("render puzzle, solution, candidates, highlights and hint", async () => {
     await renderSudokuPng(solution, { size: 450, givens: grid }),
   );
 });
+test("two inline boards each carry their own accessible title and description", () => {
+  const grid = parseGrid(PUZZLE);
+  const puzzle = renderSudokuSvg(grid, { title: "Puzzle" });
+  const solution = renderSudokuSvg(solveGrid(grid), { title: "Answer key" });
+  for (const [svg, title, firstRow] of [
+    [puzzle, "Puzzle", "5 3 . . 7 . . . ."],
+    [solution, "Answer key", "5 3 4 6 7 8 9 1 2"],
+  ]) {
+    assert.doesNotMatch(svg, /aria-labelledby|aria-describedby/);
+    assert.ok(svg.includes(`<title>${title}</title>`));
+    assert.ok(svg.includes(`<desc>${firstRow}`));
+  }
+  const ids = [...(puzzle + solution).matchAll(/\bid="([^"]+)"/g)].map(
+    (match) => match[1],
+  );
+  assert.equal(new Set(ids).size, ids.length);
+});
 test("subtitle only and no-title defaults render", () => {
   assert.ok(renderSudokuSvg(empty(), { subtitle: "Notes" }).includes("Notes"));
   assert.ok(renderSudokuSvg(empty()).includes("Sudoku puzzle"));

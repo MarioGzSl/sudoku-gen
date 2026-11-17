@@ -162,9 +162,9 @@ export function renderSudokuSvg(
   const boardSize = hasHeader ? 708 : 792,
     cell = boardSize / 9;
   const out = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 900 900" role="img" aria-labelledby="sudoku-title sudoku-description">`,
-    `<title id="sudoku-title">${escapeXml(options.title || "Sudoku puzzle")}</title>`,
-    `<desc id="sudoku-description">${grid.map((row) => row.map((v) => v || ".").join(" ")).join("; ")}${options.hint ? `. Hint: row ${options.hint.position.row + 1}, column ${options.hint.position.col + 1}, value ${options.hint.value}` : ""}</desc>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 900 900" role="img">`,
+    `<title>${escapeXml(options.title || "Sudoku puzzle")}</title>`,
+    `<desc>${grid.map((row) => row.map((v) => v || ".").join(" ")).join("; ")}${options.hint ? `. Hint: row ${options.hint.position.row + 1}, column ${options.hint.position.col + 1}, value ${options.hint.value}` : ""}</desc>`,
     `<rect width="900" height="900" rx="24" fill="${p.background}"/>`,
   ];
   if (options.title)

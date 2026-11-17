@@ -30,7 +30,8 @@ input. Every returned grid is independent of the caller's input. Standard Sudoku
 
 - `maxNodes` must be a positive safe integer. The default is 2,000,000.
 - `SearchLimitError` means the result is unknown, not unsolvable.
-- `analyze()` converts this error into `status: 'limit-exceeded'`, with null count/solution.
+- On `limit-exceeded`, `analyze()` returns a null count and solution. Its statistics
+  include the nodes, branch points and dead ends visited before the budget ran out.
 - Invalid options and an aborted signal still throw. Abort reasons propagate unchanged.
 - Synchronous functions check a signal during search, but JavaScript cannot dispatch a
   new UI event while that same thread is busy. Use the Node worker helper or a browser

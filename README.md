@@ -56,6 +56,7 @@ sudoku.generate({
 
 console.log(sudoku.prettyPrint());
 console.log(sudoku.analyze().status); // 'unique'
+console.log('Estimated difficulty:', sudoku.rateDifficulty().level);
 
 const hint = sudoku.getHint({ explain: true });
 if (hint) {
@@ -63,6 +64,9 @@ if (hint) {
   sudoku.placeNumber(hint.position, hint.value);
 }
 ```
+
+The generation profile sets a target number of clues. Use `rateDifficulty().level`
+for the player-facing estimate. It reflects the techniques the solver needed for this puzzle.
 
 `getHint()` never changes the board. Positions use zero-based `row` and `col` indexes.
 Grid values are integers: `0` is empty, `1`–`9` are digits.
@@ -105,6 +109,9 @@ const hint = getHint(grid, { allowGuess: false });
 Hints identify their technique: `naked-single`, `hidden-single`, or `solution`.
 A `solution` hint reveals a value from **one valid completion**; on an ambiguous puzzle
 it is not necessarily forced. Set `allowGuess: false` to disable these reveals.
+
+For a two-step hint, highlight `hint.position` first. Reveal the value and explanation
+when the player asks. [Runnable two-step hint example](https://github.com/MarioGzSl/sudoku-gen/blob/main/examples/two-step-hint.mjs).
 
 ## A game with protected clues and undo
 
