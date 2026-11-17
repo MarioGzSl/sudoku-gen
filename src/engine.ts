@@ -20,6 +20,11 @@ export class SearchLimitError extends Error {
     this.name = "SearchLimitError";
   }
 }
+class SearchBudgetExhausted extends SearchLimitError {
+  constructor(readonly stats: SearchStats) {
+    super(stats.nodes);
+  }
+}
 export function checkOptions(options: SolveOptions): number {
   if (!options || typeof options !== "object" || Array.isArray(options))
     throw new TypeError("Options must be an object");
@@ -71,7 +76,9 @@ export function search(
   }
   function visit(): void {
     options.signal?.throwIfAborted();
-    if (++result.stats.nodes > maxNodes) throw new SearchLimitError(maxNodes);
+    if (result.stats.nodes === maxNodes)
+      throw new SearchBudgetExhausted(result.stats);
+    result.stats.nodes++;
     let best = -1,
       mask = 0,
       size = 10;
@@ -200,11 +207,12 @@ export function analyze(grid: unknown, options: SolveOptions = {}): Analysis {
       stats: result.stats,
     };
   } catch (error) {
-    if (!(error instanceof SearchLimitError)) throw error;
+    if (!(error instanceof SearchBudgetExhausted) || options.signal?.aborted)
+      throw error;
     return {
       ...empty,
       status: "limit-exceeded",
-      stats: { ...empty.stats, nodes: error.maxNodes },
+      stats: error.stats,
     };
   }
 }

@@ -20,11 +20,12 @@ Compatible con Node.js 22 o superior; el núcleo ESM también funciona en navega
 modernos. PNG y el helper de workers son entradas opcionales exclusivas de Node.js.
 
 ```ts
-import { generateDetailed, SudokuGame, renderSudokuSvg, SudokuDifficulty } from 'sudoku-easy-solver';
+import { generateDetailed, rateDifficulty, SudokuGame, renderSudokuSvg, SudokuDifficulty } from 'sudoku-easy-solver';
 
 const puzzle = generateDetailed({
   seed: 'sudoku-del-dia', difficulty: SudokuDifficulty.MEDIUM, symmetry: 'rotational',
 });
+console.log('Dificultad estimada:', rateDifficulty(puzzle.grid).level);
 const game = new SudokuGame(puzzle.grid);
 const hint = game.getHint({ allowGuess: false });
 if (hint) game.placeNumber(hint.position, hint.value);
@@ -73,6 +74,8 @@ singles. Si no hay uno, pueden revelar una casilla de una solución: se identifi
 como `solution` y puede no ser una jugada forzada si existen varias soluciones.
 Usa `allowGuess: false` para obtener únicamente las dos técnicas lógicas.
 Las explicaciones de las pistas se devuelven en inglés.
+El [ejemplo de pista en dos pasos](../examples/two-step-hint.mjs) resalta primero la
+casilla y permite al jugador revelar el número y la explicación cuando quiera.
 
 `validateGrid` comprueba reglas locales; `analyze` comprueba resolubilidad y unicidad.
 Un movimiento localmente válido puede dejar un tablero sin solución.

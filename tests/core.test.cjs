@@ -167,6 +167,18 @@ test("resource limits are not confused with no solution", () => {
   assert.throws(() => s.solve({ maxNodes: 1 }), SearchLimitError);
   assert.deepEqual(s.getGrid(), empty());
 });
+test("limited analysis keeps branch points and dead ends already visited", () => {
+  const grid = parseGrid(
+    "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......",
+  );
+  const result = analyze(grid, { maxNodes: 200 });
+  assert.equal(result.status, "limit-exceeded");
+  assert.equal(result.solutionCount, null);
+  assert.equal(result.solution, null);
+  assert.equal(result.stats.nodes, 200);
+  assert.ok(result.stats.guesses > 0);
+  assert.ok(result.stats.backtracks > 0);
+});
 for (const maxNodes of [0, -1, NaN, Infinity, 1.5])
   test(`invalid budget ${maxNodes}`, () =>
     assert.throws(() => solveGrid(empty(), { maxNodes }), RangeError));
